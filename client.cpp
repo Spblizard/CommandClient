@@ -5,13 +5,30 @@ Client::Client(QObject *parent) : QObject(parent)
     m_udp = new QUdpSocket();
     m_udp->bind(QHostAddress::Any, 11001);
     connect(m_udp, &QUdpSocket::readyRead, this, &Client::readDatagram);
+    getAddress();
 }
 
 void Client::sendDatagram()
 {
-   QByteArray arr("send");
-   QNetworkDatagram datagram(arr, QHostAddress::Broadcast, 11002);
+   QByteArray arr("test for datagram router");
+   getAddress();
+   QNetworkDatagram datagram(arr, m_localAddress, 11002);
    m_udp->writeDatagram(datagram);
+}
+
+void Client::getAddress()
+{
+    const QHostAddress address;
+    foreach (QHostAddress address, QNetworkInterface::allAddresses()) {
+        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress::LocalHost)
+            m_localAddress = address;
+    }
+
+    QString str = m_localAddress.toString();
+    QStringList strList = str.split(".");
+    strList[3] = "255";
+    str = strList.join(".");
+    m_localAddress.setAddress(str);
 }
 
 void Client::readDatagram()
