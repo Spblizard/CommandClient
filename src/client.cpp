@@ -1,6 +1,7 @@
 #include "client.h"
+#include <qglobal.h>
 
-Client::Client(QObject *parent) : QObject(parent)
+Client::Client(QObject *parent) : QObject(parent), mNextBlockSize(0)
 {
     m_udp = new QUdpSocket();
     m_udp->bind(QHostAddress::Any, 11001);
@@ -37,26 +38,43 @@ void Client::readDatagram()
     QByteArray arr = datagram.data();
     QString str;
     QDataStream stream(&arr, QIODevice::ReadOnly);
-    stream.setVersion(QDataStream::Qt_5_9);
     stream >> str;
-    m_listHost << datagram.senderAddress();
-    emit signalToQmlHost(str);
+    mServer = datagram.senderAddress();
+    connectHost();
 }
 
-void Client::connectHost(int index)
+void Client::readClient()
+{
+    QDataStream in(m_client);
+    while (true) {
+        if (!mNextBlockSize) {
+            if (m_client->bytesAvailable() < sizeof (quint16))
+                break;
+            in >> mNextBlockSize;
+        }
+        if (m_client->bytesAvailable() < mNextBlockSize)
+            break;
+        QString command;
+        in >> command;
+        emit signalToQmlHost(command);
+        mNextBlockSize = 0;
+    }
+}
+
+void Client::connectHost()
 {
     m_client = new QTcpSocket(this);
     connect(m_client, &QTcpSocket::connected, this, &Client::slotConnected);
+    connect(m_client, &QTcpSocket::readyRead, this, &Client::readClient);
     connect(m_client, &QTcpSocket::disconnected, m_client, &Client::deleteLater);
-    connect(m_client, SIGNAL (disconnected()), this, SLOT (slotDisconnected()));
-    m_client->connectToHost(m_listHost[0], 11000);
+    connect(m_client, &QTcpSocket::disconnected, this, &Client::slotDisconnected);
+    m_client->connectToHost(mServer, 11000);
 }
 
-void Client::sendCommand(QString command)
+void Client::sendCommand(const QString &command)
 {
    QByteArray arr;
    QDataStream stream (&arr, QIODevice::WriteOnly);
-   stream.setVersion(QDataStream::Qt_5_9);
    stream << quint16(0) << command;
    m_client->write(arr);
    m_client->flush();
@@ -65,12 +83,10 @@ void Client::sendCommand(QString command)
 void Client::slotConnected()
 {
     qDebug() << "Connected";
-    emit signalToQmlConnect();
 }
 
 void Client::slotDisconnected()
 {
     qDebug() << "Disconnected";
-    emit signalToQmlDisconnect();
 }
 

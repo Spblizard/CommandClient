@@ -8,50 +8,21 @@ Window {
     height: 480
     title: qsTr("CommandClient")
 
-    Component.onCompleted: dataModel.append({"name": "Search"})
+    Component.onCompleted: client.sendDatagram()
 
     Connections {
         target: client
 
         onSignalToQmlHost: {
-            dataModel2.append({"name": str})
-        }
-
-        onSignalToQmlConnect: {
-            dataModel.clear()
-            dataModel.append({"name": "Reboot"})
-            dataModel.append({"name": "Shutdown"})
-        }
-
-        onSignalToQmlDisconnect: {
-            dataModel.clear()
-            dataModel2.clear()
-            dataModel.append({"name": "Search"})
+            dataModel.append({"name": str})
         }
     }
 
-    function changeFunc(i) {
-        if (i === 0) {
-            client.sendDatagram()
-        } else  if (i === 1){
-            dataModel2.append({"name": "first"})
-            dataModel2.append({"name": "seecond"})
-            dataModel2.append({"name": "third"})
-        } else if (i === 2) {
-            dataModel.clear()
-            dataModel2.clear()
-            dataModel.append({"name": "Start"})
-        }
-    }
-
-    Column {
+    Item {
         id: mainButton
         width: parent.width
         height: parent.height / 3
-        anchors {
-            top: parent.top
-            topMargin: parent.height / 5
-        }
+        anchors.centerIn: parent
         ListView {
             id: listViewMainButton
             anchors.fill: parent
@@ -64,36 +35,7 @@ Window {
                 width: listViewMainButton.width
                 text: name
                 onClicked: {
-                    if (dataModel.count < 2)
-                        changeFunc(index)
-                    else
-                        client.sendCommand(name)
-                }
-            }
-        }
-    }
-
-    Column {
-        id: hostsButton
-        width: parent.width
-        anchors {
-            top: mainButton.bottom
-            topMargin: parent.height / 15
-            bottom: parent.bottom
-        }
-        ListView {
-            id: listViewHostsButton
-            anchors.fill: parent
-            spacing: 10
-            model: ListModel {
-                id: dataModel2
-            }
-            delegate: Button {
-                height: listViewHostsButton.height / 5
-                width: listViewHostsButton.width
-                text: name
-                onClicked: {
-                    client.connectHost(index)
+                    client.sendCommand(name)
                 }
             }
         }

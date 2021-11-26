@@ -7,6 +7,7 @@
 #include <QNetworkDatagram>
 #include <QNetworkInterface>
 #include <QDataStream>
+#include <qhostaddress.h>
 
 class Client : public QObject
 {
@@ -17,20 +18,20 @@ public:
 private:
     QUdpSocket *m_udp;
     QTcpSocket *m_client;
-    QList<QHostAddress> m_listHost;
+    QHostAddress mServer;
     QHostAddress m_localAddress;
+    quint16 mNextBlockSize;
 
 signals:
-    void signalToQmlHost(QString str);
-    void signalToQmlConnect();
-    void signalToQmlDisconnect();
+    void signalToQmlHost(const QString &str);
 
 public slots:
     void readDatagram();
+    void readClient();
     void sendDatagram();
     void getAddress();
-    void connectHost(int);
-    void sendCommand(QString);
+    void connectHost();
+    void sendCommand(const QString &);
     virtual void slotConnected();
     virtual void slotDisconnected();
 };
