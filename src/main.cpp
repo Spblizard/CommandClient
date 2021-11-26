@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     Client client;
 
     QQmlApplicationEngine engine;
-    engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
+    engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
     engine.rootContext()->setContextProperty("client", &client);
     if (engine.rootObjects().isEmpty())
         return -1;
