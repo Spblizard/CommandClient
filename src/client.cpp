@@ -21,11 +21,13 @@ void Client::getAddress()
 {
     const QHostAddress address;
     foreach (QHostAddress address, QNetworkInterface::allAddresses()) {
-        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress::LocalHost)
+        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress::LocalHost
+                && address.toString().contains("192.168"))
             m_localAddress = address;
     }
 
     QString str = m_localAddress.toString();
+    qDebug() << "address: " << str;
     QStringList strList = str.split(".");
     strList[3] = "255";
     str = strList.join(".");
